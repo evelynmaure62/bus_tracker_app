@@ -23,7 +23,9 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<BusProvider>().listenToBus(_trackedBusId);
+    final provider = context.read<BusProvider>();
+    provider.listenToBus(_trackedBusId);
+    provider.startTracking(_trackedBusId);
   }
 
   String _formatTime(DateTime dt) {
@@ -78,6 +80,23 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                   ),
                 ),
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Tooltip(
+                  message: busProvider.locationError ??
+                      (busProvider.isTrackingLocation
+                          ? 'GPS active'
+                          : 'GPS inactive'),
+                  child: Icon(
+                    Icons.gps_fixed,
+                    color: busProvider.locationError != null
+                        ? Colors.red
+                        : busProvider.isTrackingLocation
+                            ? Colors.greenAccent
+                            : Colors.white54,
+                  ),
+                ),
+              ),
             ],
           ),
           body: Stack(
@@ -100,7 +119,10 @@ class _MapScreenState extends State<MapScreen> {
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  child: _BusInfoSheet(bus: firstBus),
+                  child: _BusInfoSheet(
+                    bus: firstBus,
+                    locationError: busProvider.locationError,
+                  ),
                 ),
             ],
           ),
@@ -112,8 +134,9 @@ class _MapScreenState extends State<MapScreen> {
 
 class _BusInfoSheet extends StatelessWidget {
   final Bus bus;
+  final String? locationError;
 
-  const _BusInfoSheet({required this.bus});
+  const _BusInfoSheet({required this.bus, this.locationError});
 
   String _formatDateTime(DateTime dt) {
     final date = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
@@ -161,6 +184,22 @@ class _BusInfoSheet extends StatelessWidget {
           ),
           if (bus.lastUpdated != null)
             Text('Last updated: ${_formatDateTime(bus.lastUpdated!)}'),
+          if (locationError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded, size: 16, color: Colors.orange),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      locationError!,
+                      style: const TextStyle(color: Colors.orange, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
