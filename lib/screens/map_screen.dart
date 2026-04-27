@@ -70,6 +70,34 @@ class _MapScreenState extends State<MapScreen> {
           appBar: AppBar(
             title: const Text('Bus Tracker'),
             actions: [
+              if (busProvider.isSimulating)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade700,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.science, size: 14, color: Colors.white),
+                          SizedBox(width: 4),
+                          Text(
+                            'SIMULATION',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               if (firstBus?.lastUpdated != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -80,24 +108,40 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                   ),
                 ),
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: Tooltip(
-                  message: busProvider.locationError ??
-                      (busProvider.isTrackingLocation
-                          ? 'GPS active'
-                          : 'GPS inactive'),
-                  child: Icon(
-                    Icons.gps_fixed,
-                    color: busProvider.locationError != null
-                        ? Colors.red
-                        : busProvider.isTrackingLocation
-                            ? Colors.greenAccent
-                            : Colors.white54,
+              if (!busProvider.isSimulating)
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Tooltip(
+                    message: busProvider.locationError ??
+                        (busProvider.isTrackingLocation
+                            ? 'GPS active'
+                            : 'GPS inactive'),
+                    child: Icon(
+                      Icons.gps_fixed,
+                      color: busProvider.locationError != null
+                          ? Colors.red
+                          : busProvider.isTrackingLocation
+                              ? Colors.greenAccent
+                              : Colors.white54,
+                    ),
                   ),
                 ),
-              ),
             ],
+          ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () {
+              final provider = context.read<BusProvider>();
+              if (provider.isSimulating) {
+                provider.stopSimulation(_trackedBusId);
+              } else {
+                provider.startSimulation(_trackedBusId);
+              }
+            },
+            backgroundColor:
+                busProvider.isSimulating ? Colors.red : Colors.amber.shade700,
+            icon: Icon(busProvider.isSimulating ? Icons.stop : Icons.science),
+            label: Text(
+                busProvider.isSimulating ? 'Stop Simulation' : 'Simulate'),
           ),
           body: Stack(
             children: [
@@ -116,12 +160,15 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               if (firstBus != null)
                 Positioned(
-                  bottom: 0,
+                  bottom: 80,
                   left: 0,
                   right: 0,
                   child: _BusInfoSheet(
                     bus: firstBus,
-                    locationError: busProvider.locationError,
+                    locationError: busProvider.isSimulating
+                        ? null
+                        : busProvider.locationError,
+                    isSimulating: busProvider.isSimulating,
                   ),
                 ),
             ],
@@ -135,8 +182,13 @@ class _MapScreenState extends State<MapScreen> {
 class _BusInfoSheet extends StatelessWidget {
   final Bus bus;
   final String? locationError;
+  final bool isSimulating;
 
-  const _BusInfoSheet({required this.bus, this.locationError});
+  const _BusInfoSheet({
+    required this.bus,
+    this.locationError,
+    this.isSimulating = false,
+  });
 
   String _formatDateTime(DateTime dt) {
     final date = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
@@ -171,10 +223,19 @@ class _BusInfoSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.green.shade100,
+                  color: isSimulating
+                      ? Colors.amber.shade100
+                      : Colors.green.shade100,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text('Active', style: TextStyle(color: Colors.green)),
+                child: Text(
+                  isSimulating ? 'Simulated' : 'Active',
+                  style: TextStyle(
+                    color: isSimulating
+                        ? Colors.amber.shade800
+                        : Colors.green,
+                  ),
+                ),
               ),
             ],
           ),
