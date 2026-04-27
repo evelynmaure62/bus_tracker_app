@@ -128,21 +128,6 @@ class _MapScreenState extends State<MapScreen> {
                 ),
             ],
           ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () {
-              final provider = context.read<BusProvider>();
-              if (provider.isSimulating) {
-                provider.stopSimulation(_trackedBusId);
-              } else {
-                provider.startSimulation(_trackedBusId);
-              }
-            },
-            backgroundColor:
-                busProvider.isSimulating ? Colors.red : Colors.amber.shade700,
-            icon: Icon(busProvider.isSimulating ? Icons.stop : Icons.science),
-            label: Text(
-                busProvider.isSimulating ? 'Stop Simulation' : 'Simulate'),
-          ),
           body: Stack(
             children: [
               if (busProvider.isLoading)
@@ -158,19 +143,48 @@ class _MapScreenState extends State<MapScreen> {
                   },
                   markers: buses.values.map(BusMarker.fromBus).toSet(),
                 ),
-              if (firstBus != null)
-                Positioned(
-                  bottom: 80,
-                  left: 0,
-                  right: 0,
-                  child: _BusInfoSheet(
-                    bus: firstBus,
-                    locationError: busProvider.isSimulating
-                        ? null
-                        : busProvider.locationError,
-                    isSimulating: busProvider.isSimulating,
-                  ),
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16, bottom: 8),
+                      child: FloatingActionButton.extended(
+                        heroTag: 'simulateFab',
+                        onPressed: () {
+                          final provider = context.read<BusProvider>();
+                          if (provider.isSimulating) {
+                            provider.stopSimulation(_trackedBusId);
+                          } else {
+                            provider.startSimulation(_trackedBusId);
+                          }
+                        },
+                        backgroundColor: busProvider.isSimulating
+                            ? Colors.red
+                            : Colors.amber.shade700,
+                        icon: Icon(busProvider.isSimulating
+                            ? Icons.stop
+                            : Icons.science),
+                        label: Text(busProvider.isSimulating
+                            ? 'Stop Simulation'
+                            : 'Simulate'),
+                      ),
+                    ),
+                    if (firstBus != null)
+                      _BusInfoSheet(
+                        bus: firstBus,
+                        locationError: busProvider.isSimulating
+                            ? null
+                            : busProvider.locationError,
+                        isSimulating: busProvider.isSimulating,
+                      ),
+                  ],
                 ),
+              ),
             ],
           ),
         );
