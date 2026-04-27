@@ -67,15 +67,6 @@ class _MapScreenState extends State<MapScreen> {
             : _defaultPosition;
 
         return Scaffold(
-          bottomSheet: firstBus != null
-              ? _BusInfoSheet(
-                  bus: firstBus,
-                  locationError: busProvider.isSimulating
-                      ? null
-                      : busProvider.locationError,
-                  isSimulating: busProvider.isSimulating,
-                )
-              : null,
           appBar: AppBar(
             title: const Text('Bus Tracker'),
             actions: [
@@ -137,24 +128,12 @@ class _MapScreenState extends State<MapScreen> {
                 ),
             ],
           ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () {
-              final provider = context.read<BusProvider>();
-              if (provider.isSimulating) {
-                provider.stopSimulation(_trackedBusId);
-              } else {
-                provider.startSimulation(_trackedBusId);
-              }
-            },
-            backgroundColor:
-                busProvider.isSimulating ? Colors.red : Colors.amber.shade700,
-            icon: Icon(busProvider.isSimulating ? Icons.stop : Icons.science),
-            label: Text(
-                busProvider.isSimulating ? 'Stop Simulation' : 'Simulate'),
-          ),
-          body: busProvider.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : GoogleMap(
+          body: Stack(
+            children: [
+              if (busProvider.isLoading)
+                const Center(child: CircularProgressIndicator())
+              else
+                GoogleMap(
                   initialCameraPosition: CameraPosition(
                     target: cameraTarget,
                     zoom: 18,
@@ -164,6 +143,50 @@ class _MapScreenState extends State<MapScreen> {
                   },
                   markers: buses.values.map(BusMarker.fromBus).toSet(),
                 ),
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16, bottom: 8),
+                      child: FloatingActionButton.extended(
+                        heroTag: 'simulateFab',
+                        onPressed: () {
+                          final provider = context.read<BusProvider>();
+                          if (provider.isSimulating) {
+                            provider.stopSimulation(_trackedBusId);
+                          } else {
+                            provider.startSimulation(_trackedBusId);
+                          }
+                        },
+                        backgroundColor: busProvider.isSimulating
+                            ? Colors.red
+                            : Colors.amber.shade700,
+                        icon: Icon(busProvider.isSimulating
+                            ? Icons.stop
+                            : Icons.science),
+                        label: Text(busProvider.isSimulating
+                            ? 'Stop Simulation'
+                            : 'Simulate'),
+                      ),
+                    ),
+                    if (firstBus != null)
+                      _BusInfoSheet(
+                        bus: firstBus,
+                        locationError: busProvider.isSimulating
+                            ? null
+                            : busProvider.locationError,
+                        isSimulating: busProvider.isSimulating,
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
