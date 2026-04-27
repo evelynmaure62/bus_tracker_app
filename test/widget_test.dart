@@ -1,30 +1,44 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:bus_tracker_app/main.dart';
+import 'package:bus_tracker_app/models/bus.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('Bus model', () {
+    test('fromMap creates Bus with correct values', () {
+      final bus = Bus.fromMap('bus1', {'lat': 37.4279, 'lng': -122.0857});
+      expect(bus.id, 'bus1');
+      expect(bus.lat, 37.4279);
+      expect(bus.lng, -122.0857);
+      expect(bus.lastUpdated, isNull);
+    });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    test('fromMap parses lastUpdated timestamp', () {
+      final ts = DateTime(2024, 1, 15, 10, 30).millisecondsSinceEpoch;
+      final bus = Bus.fromMap('bus1', {'lat': 0.0, 'lng': 0.0, 'lastUpdated': ts});
+      expect(bus.lastUpdated, isNotNull);
+      expect(bus.lastUpdated!.millisecondsSinceEpoch, ts);
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    test('toMap returns correct map without lastUpdated', () {
+      final bus = Bus(id: 'bus1', lat: 37.4279, lng: -122.0857);
+      final map = bus.toMap();
+      expect(map['lat'], 37.4279);
+      expect(map['lng'], -122.0857);
+      expect(map.containsKey('lastUpdated'), isFalse);
+    });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    test('toMap includes lastUpdated when set', () {
+      final now = DateTime(2024, 6, 1);
+      final bus = Bus(id: 'bus1', lat: 1.0, lng: 2.0, lastUpdated: now);
+      final map = bus.toMap();
+      expect(map['lastUpdated'], now.millisecondsSinceEpoch);
+    });
+
+    test('fromMap handles integer lat/lng', () {
+      final bus = Bus.fromMap('bus2', {'lat': 37, 'lng': -122});
+      expect(bus.lat, 37.0);
+      expect(bus.lng, -122.0);
+    });
   });
 }
+
