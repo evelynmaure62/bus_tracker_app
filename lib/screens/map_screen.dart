@@ -67,6 +67,15 @@ class _MapScreenState extends State<MapScreen> {
             : _defaultPosition;
 
         return Scaffold(
+          bottomSheet: firstBus != null
+              ? _BusInfoSheet(
+                  bus: firstBus,
+                  locationError: busProvider.isSimulating
+                      ? null
+                      : busProvider.locationError,
+                  isSimulating: busProvider.isSimulating,
+                )
+              : null,
           appBar: AppBar(
             title: const Text('Bus Tracker'),
             actions: [
@@ -143,12 +152,9 @@ class _MapScreenState extends State<MapScreen> {
             label: Text(
                 busProvider.isSimulating ? 'Stop Simulation' : 'Simulate'),
           ),
-          body: Stack(
-            children: [
-              if (busProvider.isLoading)
-                const Center(child: CircularProgressIndicator())
-              else
-                GoogleMap(
+          body: busProvider.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : GoogleMap(
                   initialCameraPosition: CameraPosition(
                     target: cameraTarget,
                     zoom: 18,
@@ -158,21 +164,6 @@ class _MapScreenState extends State<MapScreen> {
                   },
                   markers: buses.values.map(BusMarker.fromBus).toSet(),
                 ),
-              if (firstBus != null)
-                Positioned(
-                  bottom: 80,
-                  left: 0,
-                  right: 0,
-                  child: _BusInfoSheet(
-                    bus: firstBus,
-                    locationError: busProvider.isSimulating
-                        ? null
-                        : busProvider.locationError,
-                    isSimulating: busProvider.isSimulating,
-                  ),
-                ),
-            ],
-          ),
         );
       },
     );
