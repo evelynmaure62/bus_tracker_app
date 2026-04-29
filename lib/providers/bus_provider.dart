@@ -141,7 +141,7 @@ class BusProvider extends ChangeNotifier {
     _simulationSubscription = null;
     _isSimulating = false;
     _buses.remove(busId);
-    _isLoading = true;
+    _isLoading = false;
     notifyListeners();
   }
 

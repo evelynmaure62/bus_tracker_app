@@ -18,14 +18,13 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   GoogleMapController? _mapController;
 
-  static const _defaultPosition = LatLng(37.4279, -122.0857);
+  static const _defaultPosition = LatLng(31.6205, -94.6457);
 
   @override
   void initState() {
     super.initState();
     final provider = context.read<BusProvider>();
-    provider.listenToBus(_trackedBusId);
-    provider.startTracking(_trackedBusId);
+    provider.startSimulation(_trackedBusId);
   }
 
   String _formatTime(DateTime dt) {
@@ -65,6 +64,16 @@ class _MapScreenState extends State<MapScreen> {
         final cameraTarget = firstBus != null
             ? LatLng(firstBus.lat, firstBus.lng)
             : _defaultPosition;
+
+        if (_mapController != null && firstBus != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _mapController?.animateCamera(
+              CameraUpdate.newLatLng(
+                LatLng(firstBus.lat, firstBus.lng),
+              ),
+            );
+          });
+        }
 
         return Scaffold(
           appBar: AppBar(
